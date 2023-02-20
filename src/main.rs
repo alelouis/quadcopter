@@ -61,7 +61,7 @@ fn main() {
 
     /* Create other structures necessary for the simulation. */
     let g = 9.81;
-    let gravity = vector![0.0, 0.0, -g];
+    let gravity = vector![0.0, -g, 0.0];
     let integration_parameters = IntegrationParameters::default();
     let mut physics_pipeline = PhysicsPipeline::new();
     let mut island_manager = IslandManager::new();
@@ -95,7 +95,8 @@ fn main() {
 
         let k = 1.0;
         let rb = rigid_body_set.get_mut(ball_body_handle).unwrap();
-        let inputs = vector![1.0, 1.0, 1.0, 1.0] * 0.1;
+        let inputs = vector![1.0, 1.0, 1.0, 1.0] * 5.0
+            ;
         let (theta, phi, psi) = rb.rotation().euler_angles();
         let linvel = rb.linvel().xyz();
         let acc = acceleration(inputs, vector![theta, phi, psi], linvel, 1.0, k, 0.05);
@@ -106,6 +107,6 @@ fn main() {
 
         let ball_body = &rigid_body_set[ball_body_handle];
         println!("Ball position: {}, {}, {}", ball_body.translation().x, ball_body.translation().y, ball_body.translation().z);
-        println!("Ball orientation: {},", ball_body.angvel());
+        //println!("Ball orientation: {},", ball_body.angvel());
     }
 }
