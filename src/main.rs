@@ -3,7 +3,7 @@ use rapier3d::prelude::*;
 use nalgebra;
 
 fn thrust(inputs: Vector4<Real>, k: Real) -> Vector3<Real> {
-    let T = vector![0.0, 0.0, k * inputs.sum()];
+    let T = vector![0.0, k * inputs.sum(), 0.0];
     T
 }
 
@@ -53,7 +53,7 @@ fn main() {
 
     /* Create the bounding ball. */
     let rigid_body = RigidBodyBuilder::dynamic()
-        .translation(vector![0.0, 0.0, 0.0])
+        .translation(vector![0.0, 10.0, 0.0])
         .build();
     let collider = ColliderBuilder::ball(0.5).build();
     let ball_body_handle = rigid_body_set.insert(rigid_body);
@@ -95,7 +95,7 @@ fn main() {
 
         let k = 1.0;
         let rb = rigid_body_set.get_mut(ball_body_handle).unwrap();
-        let inputs = vector![1.0, 1.0, 1.0, 1.0] * 5.0
+        let inputs = vector![1.0, 1.0, 1.0, 1.0] * 1.0
             ;
         let (theta, phi, psi) = rb.rotation().euler_angles();
         let linvel = rb.linvel().xyz();
