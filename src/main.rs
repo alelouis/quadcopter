@@ -116,7 +116,7 @@ fn main() {
 
     /* Create the bounding ball. */
     let rigid_body = RigidBodyBuilder::dynamic()
-        .translation(vector![0.0, 10.0, 0.0])
+        .translation(vector![0.0, 2.0, 0.0])
         .build();
     let collider = ColliderBuilder::cuboid(1.0, 0.2, 1.0).mass(0.5).build();
     let ball_body_handle = rigid_body_set.insert(rigid_body);
@@ -139,7 +139,7 @@ fn main() {
     let dt = 1.;
 
     let mut window = Window::new("QuadCopter");
-    let mut c = window.add_cube(1.0, 0.2, 1.0);
+    let mut c = window.add_cube(1.0, 0.1, 1.0);
     c.set_color(0.0, 1.0, 0.0);
     let mut x = window.add_cube(10.0, 0.01, 0.01);
     let mut y = window.add_cube(0.01, 10.0, 0.01);
@@ -151,7 +151,8 @@ fn main() {
     let mut right = false;
     let mut left = false;
     let mut inputs = vector![0.0, 0.0, 0.0, 0.0];
-    let eye = Point3::new(10.0f32, 10.0, 10.0);
+    let mut thrust_vec = vector![0.0, 0.0, 0.0, 0.0];
+    let eye = Point3::new(5.0f32, 5.0, 5.0);
     let mut arc_ball = FirstPerson::new(eye, Point3::origin());
     arc_ball.unbind_movement_keys();
 
@@ -190,27 +191,51 @@ fn main() {
         );
         let k = 0.1;
         let rb = rigid_body_set.get_mut(ball_body_handle).unwrap();
+        let mut inputs = vector![0.0, 0.0, 0.0, 0.0];
 
         if up == true {
-            inputs += vector![1.0, 1.0, 1.0, 1.0] * 0.1;
+            thrust_vec += vector![1.0, 1.0, 1.0, 1.0] * 0.05;
         }
 
         if down == true {
-            inputs -= vector![1.0, 1.0, 1.0, 1.0] * 0.1;
+            thrust_vec -= vector![1.0, 1.0, 1.0, 1.0] * 0.05;
         }
 
+        inputs = thrust_vec;
+
         if left == true {
-            inputs += vector![0.0, 0.0, 0.01, 0.01] * 0.1;
+            let total_thrust = thrust_vec.sum();
+            inputs += vector![
+                total_thrust / 50.0,
+                total_thrust / 50.0,
+                -total_thrust / 50.0,
+                -total_thrust / 50.0
+            ];
         }
 
         if right == true {
-            inputs -= vector![0.0, 0.0, 0.01, 0.01] * 0.1;
+            let total_thrust = thrust_vec.sum();
+            inputs += vector![
+                -total_thrust / 50.0,
+                -total_thrust / 50.0,
+                total_thrust / 50.0,
+                total_thrust / 50.0
+            ];
         }
 
         for mut event in window.events().iter() {
             match event.value {
                 WindowEvent::Key(button, Action::Press, _) => {
                     match button {
+                        Key::Return => {
+                            rb.set_position(
+                                Isometry::new(vector![0.0, 2.0, 0.0], vector![0.0, 0.0, 0.0]),
+                                true,
+                            );
+                            inputs = vector![0.0, 0.0, 0.0, 0.0];
+                            rb.set_angvel(vector![0.0, 0.0, 0.0], false);
+                            rb.set_linvel(vector![0.0, 0.0, 0.0], false);
+                        }
                         Key::Up => {
                             up = true;
                         }
@@ -279,22 +304,27 @@ fn main() {
         y.set_local_rotation(UnitQuaternion::from_euler_angles(theta, phi, psi));
 
         arc_ball.look_at(
-            Point3::from(position + kiss3d::nalgebra::Vector3::new(10.0, 10.0, 10.0)),
+            Point3::from(position + kiss3d::nalgebra::Vector3::new(5.0, 5.0, 5.0)),
             Point3::from(position),
         );
         //
         window.render_with_camera(&mut arc_ball);
-        let velocity = ball_body.linvel().magnitude().clone();
+        let vertical_velocity = ball_body.linvel().y;
+        let horizontal_velocity =
+            (ball_body.linvel().x.powi(2) + ball_body.linvel().z.powi(2)).sqrt();
         let altitude = ball_body.position().translation.y;
         let X = ball_body.position().translation.x;
         let Z = ball_body.position().translation.z;
         let rolld = roll.to_degrees();
         let pitchd = pitch.to_degrees();
         let yawd = yaw.to_degrees();
+        let thrust = inputs.sum();
 
         let text = &*format!(
             "\
-        Velocity = {velocity:.2}\n\
+        Vertical velocity = {vertical_velocity:.2}\n\
+        Horizontal velocity = {horizontal_velocity:.2}\n\
+        Thrust = {thrust:.2}\n\
         Alt. = {altitude:.2}\n\
         X = {X:.2}\n\
         Z = {Z:.2}\n\
