@@ -91,19 +91,26 @@ fn acceleration(
     a
 }
 
-fn angular_acceleration(
-    inputs: Vector4<Real>,
-    omega: &Vector<Real>,
-    I: Matrix3<Real>,
-    L: Real,
-    b: Real,
-    k: Real,
-) -> Vector3<Real> {
-    let tau = torque(inputs, L, b, k);
-    let vec = (I * omega);
-    let cross = &omega.cross(&vec);
-    let omegaddot = I.pseudo_inverse(0.1).unwrap() * (tau - cross);
-    omegaddot
+fn pid(k: Real, L: Real, phi_dot: Real, theta_dot: Real, psi_dot: Real, b: Real) -> Vector4<Real> {
+    let m = 0.5;
+    let g = 9.81;
+    let kp = 0.5;
+    let e_phi = kp * (phi_dot);
+    let e_theta = kp * (theta_dot);
+    let e_psi = kp * (psi_dot - 1.0);
+    let I: Matrix3<Real> = Matrix3::identity();
+
+    let mut target_thrust = 100.0;
+    target_thrust /= 4.0;
+
+    let input_1 =
+        target_thrust - (2.0 * b * e_phi * I.m11 + e_psi * I.m33 * k * L) / (4.0 * b * k * L);
+    let input_2 = target_thrust + (e_psi * I.m33) / (4.0 * b) - (e_theta * I.m22) / (2.0 * k * L);
+    let input_3 =
+        target_thrust - (-2.0 * b * e_phi * I.m11 + e_psi * I.m33 * k * L) / (4.0 * b * k * L);
+    let input_4 = target_thrust + (e_psi * I.m33) / (4.0 * b) + (e_theta * I.m22) / (2.0 * k * L);
+
+    return Vector4::new(input_1, input_2, input_3, input_4);
 }
 
 fn main() {
@@ -111,8 +118,8 @@ fn main() {
     let mut collider_set = ColliderSet::new();
 
     /* Create the ground. */
-    let collider = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
-    collider_set.insert(collider);
+    // let collider = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
+    // collider_set.insert(collider);
 
     /* Create the bounding ball. */
     let rigid_body = RigidBodyBuilder::dynamic()
@@ -275,7 +282,18 @@ fn main() {
         }
 
         let (theta, phi, psi) = rb.rotation().euler_angles();
+        let angular_velocities = rb.angvel().clone();
         let linvel = rb.linvel().xyz();
+        let b = 1.0;
+        let inputs_pid = pid(
+            k,
+            L,
+            angular_velocities.x,
+            angular_velocities.y,
+            angular_velocities.z,
+            b,
+        );
+        inputs += inputs_pid;
         let acc = acceleration(inputs, vector![theta, phi, psi], linvel, 1.0, k, 0.00);
         let frame_torque = torque(inputs, L, 1.00, k);
         let world_torque = rotation(vector![theta, phi, psi]) * frame_torque;
@@ -330,7 +348,8 @@ fn main() {
         Z = {Z:.2}\n\
         Roll = {rolld:.2}\n\
         Pitch = {pitchd:.2}\n\
-        Yaw = {yawd:.2}\n"
+        Yaw = {yawd:.2}\n\
+        Theta Ang Vel = {angular_velocities:.2}"
         );
 
         let i0_intensity = inputs[0] / inputs.max();
