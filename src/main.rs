@@ -1,3 +1,11 @@
+mod controller;
+mod drone;
+mod pid;
+
+use controller::get_commands;
+use drone::{acceleration, rotation, thrust, torque};
+use pid::pid;
+
 use nalgebra;
 use rapier3d::na::{matrix, Matrix1x3, Matrix3, Matrix3x1, Vector3, Vector4};
 use rapier3d::prelude::*;
@@ -10,6 +18,9 @@ use kiss3d::scene::SceneNode;
 use kiss3d::text::Font;
 use kiss3d::window::{State, Window};
 use nalgebra::SMatrix;
+
+use std::sync::mpsc::{channel, TryRecvError};
+use std::thread;
 
 struct AppState {
     c: SceneNode,
@@ -40,86 +51,15 @@ struct AppState {
 }
 
 impl State for AppState {
-    fn step(&mut self, window: &mut Window) {
-
-        //println!("Ball position: {}, {}, {}",  ball_body.translation().x, ball_body.translation().y, ball_body.translation().z);
-        //println!("Ball orientation: {},", ball_body.angvel());
-
-        //translation += Vector3::new(0.0, 0.0, 0.01);
-        //c.prepend_to_local_rotation(&rot);
-        //c.set_local_translation(Translation {vector: translation});
-    }
-}
-
-fn thrust(inputs: Vector4<Real>, k: Real) -> Real {
-    k * inputs.sum()
-}
-
-fn torque(inputs: Vector4<Real>, L: Real, b: Real, k: Real) -> Vector3<Real> {
-    let tau = vector![
-        L * k * (inputs[0] - inputs[2]),
-        L * k * (inputs[1] - inputs[3]),
-        b * (inputs[0] - inputs[1] + inputs[2] - inputs[3])
-    ];
-    tau
-}
-
-fn rotation(angles: Vector3<Real>) -> Matrix3<Real> {
-    let phi = angles[0];
-    let theta = angles[1];
-    let psi = angles[2];
-    let R1 = matrix![1.0, 0.0, 0.0; 0.0, phi.cos(), phi.sin(); 0.0, -phi.sin(), phi.cos()];
-    let R2 = matrix![theta.cos(), 0.0, -theta.sin(); 0.0, 1.0, 0.0; theta.sin(), 0.0, theta.cos()];
-    let R3 = matrix![psi.cos(), psi.sin(), 0.0; -psi.sin(), psi.cos(), 0.0; 0.0, 0.0, 1.0];
-    let R = R3.transpose() * R2.transpose() * R1.transpose();
-    R
-}
-
-fn acceleration(
-    inputs: Vector4<Real>,
-    angles: Vector3<Real>,
-    xdot: Vector3<Real>,
-    m: Real,
-    k: Real,
-    kd: Real,
-) -> Vector3<Real> {
-    let quat = rapier3d::na::UnitQuaternion::from_euler_angles(angles.x, angles.y, angles.z);
-    let normal = quat.transform_vector(&Vector3::new(0.0, 1.0, 0.0));
-    let T = normal * thrust(inputs, k);
-    //let Fd = -kd * xdot;
-    let a = 1.0 / m * T;
-    a
-}
-
-fn pid(k: Real, L: Real, phi_dot: Real, theta_dot: Real, psi_dot: Real, b: Real) -> Vector4<Real> {
-    let m = 0.5;
-    let g = 9.81;
-    let kp = 0.5;
-    let e_phi = kp * (phi_dot);
-    let e_theta = kp * (theta_dot);
-    let e_psi = kp * (psi_dot - 1.0);
-    let I: Matrix3<Real> = Matrix3::identity();
-
-    let mut target_thrust = 100.0;
-    target_thrust /= 4.0;
-
-    let input_1 =
-        target_thrust - (2.0 * b * e_phi * I.m11 + e_psi * I.m33 * k * L) / (4.0 * b * k * L);
-    let input_2 = target_thrust + (e_psi * I.m33) / (4.0 * b) - (e_theta * I.m22) / (2.0 * k * L);
-    let input_3 =
-        target_thrust - (-2.0 * b * e_phi * I.m11 + e_psi * I.m33 * k * L) / (4.0 * b * k * L);
-    let input_4 = target_thrust + (e_psi * I.m33) / (4.0 * b) + (e_theta * I.m22) / (2.0 * k * L);
-
-    return Vector4::new(input_1, input_2, input_3, input_4);
+    fn step(&mut self, window: &mut Window) {}
 }
 
 fn main() {
     let mut rigid_body_set = RigidBodySet::new();
     let mut collider_set = ColliderSet::new();
 
-    /* Create the ground. */
-    // let collider = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
-    // collider_set.insert(collider);
+    let collider = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
+    collider_set.insert(collider);
 
     /* Create the bounding ball. */
     let rigid_body = RigidBodyBuilder::dynamic()
@@ -180,6 +120,13 @@ fn main() {
 
     let font = kiss3d::text::Font::default();
 
+    let (tx, rx) = channel();
+    thread::spawn(move || get_commands(tx));
+    let mut last_throttle: f32 = 0.0;
+    let mut last_pitch: f32 = 0.0;
+    let mut last_roll: f32 = 0.0;
+    let mut last_yaw: f32 = 0.0;
+
     while !window.should_close() {
         physics_pipeline.step(
             &gravity,
@@ -200,91 +147,24 @@ fn main() {
         let rb = rigid_body_set.get_mut(ball_body_handle).unwrap();
         let mut inputs = vector![0.0, 0.0, 0.0, 0.0];
 
-        if up == true {
-            thrust_vec += vector![1.0, 1.0, 1.0, 1.0] * 0.05;
-        }
-
-        if down == true {
-            thrust_vec -= vector![1.0, 1.0, 1.0, 1.0] * 0.05;
-        }
-
-        inputs = thrust_vec;
-
-        if left == true {
-            let total_thrust = thrust_vec.sum();
-            inputs += vector![
-                total_thrust / 50.0,
-                total_thrust / 50.0,
-                -total_thrust / 50.0,
-                -total_thrust / 50.0
-            ];
-        }
-
-        if right == true {
-            let total_thrust = thrust_vec.sum();
-            inputs += vector![
-                -total_thrust / 50.0,
-                -total_thrust / 50.0,
-                total_thrust / 50.0,
-                total_thrust / 50.0
-            ];
-        }
-
-        for mut event in window.events().iter() {
-            match event.value {
-                WindowEvent::Key(button, Action::Press, _) => {
-                    match button {
-                        Key::Return => {
-                            rb.set_position(
-                                Isometry::new(vector![0.0, 2.0, 0.0], vector![0.0, 0.0, 0.0]),
-                                true,
-                            );
-                            inputs = vector![0.0, 0.0, 0.0, 0.0];
-                            rb.set_angvel(vector![0.0, 0.0, 0.0], false);
-                            rb.set_linvel(vector![0.0, 0.0, 0.0], false);
-                        }
-                        Key::Up => {
-                            up = true;
-                        }
-                        Key::Down => {
-                            down = true;
-                        }
-                        Key::Left => {
-                            left = true;
-                        }
-                        Key::Right => {
-                            right = true;
-                        }
-                        _ => {}
-                    }
-                    event.inhibited = true // override the default keyboard handler
-                }
-                WindowEvent::Key(button, Action::Release, _) => {
-                    match button {
-                        Key::Up => {
-                            up = false;
-                        }
-                        Key::Down => {
-                            down = false;
-                        }
-                        Key::Left => {
-                            left = false;
-                        }
-                        Key::Right => {
-                            right = false;
-                        }
-                        _ => {}
-                    }
-                    event.inhibited = true // override the default keyboard handler
-                }
-                _ => {}
-            }
-        }
-
         let (theta, phi, psi) = rb.rotation().euler_angles();
-        let angular_velocities = rb.angvel().clone();
+        let angular_velocities =
+            rotation(vector![theta, phi, psi]).transpose() * rb.angvel().clone();
         let linvel = rb.linvel().xyz();
         let b = 1.0;
+
+        let event = rx.try_recv();
+
+        match event {
+            Ok((throttle, pitch, roll, yaw)) => {
+                last_throttle = throttle.unwrap_or(last_throttle);
+                last_pitch = pitch.unwrap_or(last_pitch);
+                last_roll = roll.unwrap_or(last_roll);
+                last_yaw = yaw.unwrap_or(last_yaw);
+            }
+            _ => {}
+        }
+
         let inputs_pid = pid(
             k,
             L,
@@ -292,6 +172,10 @@ fn main() {
             angular_velocities.y,
             angular_velocities.z,
             b,
+            last_throttle,
+            last_pitch,
+            last_roll,
+            last_yaw,
         );
         inputs += inputs_pid;
         let acc = acceleration(inputs, vector![theta, phi, psi], linvel, 1.0, k, 0.00);
@@ -317,8 +201,6 @@ fn main() {
         let (roll, pitch, yaw) = ball_body.rotation().euler_angles();
         c.set_local_rotation(UnitQuaternion::from_euler_angles(roll, pitch, yaw));
         y.set_local_translation(Translation { vector: position });
-        //x.set_local_translation(Translation { vector: position });
-        //z.set_local_translation(Translation { vector: position });
         y.set_local_rotation(UnitQuaternion::from_euler_angles(theta, phi, psi));
 
         arc_ball.look_at(
@@ -352,10 +234,10 @@ fn main() {
         Theta Ang Vel = {angular_velocities:.2}"
         );
 
-        let i0_intensity = inputs[0] / inputs.max();
-        let i1_intensity = inputs[1] / inputs.max();
-        let i2_intensity = inputs[2] / inputs.max();
-        let i3_intensity = inputs[3] / inputs.max();
+        let i0_intensity = inputs[0] / inputs.sum();
+        let i1_intensity = inputs[1] / inputs.sum();
+        let i2_intensity = inputs[2] / inputs.sum();
+        let i3_intensity = inputs[3] / inputs.sum();
         i0.set_color(0.0, i0_intensity, 0.0);
         i1.set_color(0.0, i1_intensity, 0.0);
         i2.set_color(0.0, i2_intensity, 0.0);

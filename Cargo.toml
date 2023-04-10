@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 rapier3d = { version = "0.17.1", features = [ "simd-stable" ] }
-
-
+kiss3d = "0.35.0"
+nalgebra = "0.32.1"
+gilrs = "0.10.1"
