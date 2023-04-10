@@ -3,56 +3,19 @@ mod drone;
 mod pid;
 
 use controller::get_commands;
-use drone::{acceleration, rotation, thrust, torque};
+use drone::{acceleration, rotation, torque};
 use pid::pid;
 
-use nalgebra;
-use rapier3d::na::{matrix, Matrix1x3, Matrix3, Matrix3x1, Vector3, Vector4};
 use rapier3d::prelude::*;
 
-use kiss3d::camera::{ArcBall, Camera, FirstPerson};
-use kiss3d::event::{Action, Key, WindowEvent};
+use kiss3d::camera::FirstPerson;
 use kiss3d::light::Light;
-use kiss3d::nalgebra::{vector, Point2, Point3, Translation, Translation3, UnitQuaternion};
-use kiss3d::scene::SceneNode;
-use kiss3d::text::Font;
-use kiss3d::window::{State, Window};
-use nalgebra::SMatrix;
+use kiss3d::nalgebra::{vector, Point2, Point3, Translation, UnitQuaternion};
+use kiss3d::window::Window;
 
-use std::sync::mpsc::{channel, TryRecvError};
+use std::sync::mpsc::channel;
 use std::thread;
 
-struct AppState {
-    c: SceneNode,
-    x: SceneNode,
-    y: SceneNode,
-    z: SceneNode,
-    physics_pipeline: PhysicsPipeline,
-    gravity: Vector<Real>,
-    rigid_body_set: RigidBodySet,
-    collider_set: ColliderSet,
-    integration_parameters: IntegrationParameters,
-    island_manager: IslandManager,
-    broad_phase: BroadPhase,
-    narrow_phase: NarrowPhase,
-    impulse_joint_set: ImpulseJointSet,
-    multibody_joint_set: MultibodyJointSet,
-    ccd_solver: CCDSolver,
-    physics_hooks: (),
-    event_handler: (),
-    ball_body_handle: RigidBodyHandle,
-    L: Real,
-    dt: Real,
-    up: bool,
-    down: bool,
-    right: bool,
-    left: bool,
-    inputs: Vector4<Real>,
-}
-
-impl State for AppState {
-    fn step(&mut self, window: &mut Window) {}
-}
 
 fn main() {
     let mut rigid_body_set = RigidBodySet::new();
@@ -82,30 +45,21 @@ fn main() {
     let mut ccd_solver = CCDSolver::new();
     let physics_hooks = ();
     let event_handler = ();
-    let L = 1.0;
+    let l = 1.0;
     let dt = 1.;
 
     let mut window = Window::new("QuadCopter");
     let mut c = window.add_cube(1.0, 0.1, 1.0);
     c.set_color(0.0, 1.0, 0.0);
-    let mut x = window.add_cube(10.0, 0.01, 0.01);
+    window.add_cube(10.0, 0.01, 0.01);
     let mut y = window.add_cube(0.01, 10.0, 0.01);
-    let mut z = window.add_cube(0.01, 0.01, 10.0);
+    window.add_cube(0.01, 0.01, 10.0);
 
     window.set_light(Light::StickToCamera);
-    let mut up = false;
-    let mut down = false;
-    let mut right = false;
-    let mut left = false;
-    let mut inputs = vector![0.0, 0.0, 0.0, 0.0];
-    let mut thrust_vec = vector![0.0, 0.0, 0.0, 0.0];
     let eye = Point3::new(5.0f32, 5.0, 5.0);
     let mut arc_ball = FirstPerson::new(eye, Point3::origin());
     arc_ball.unbind_movement_keys();
 
-    let a_ = Point3::new(-0.1, -0.1, 0.0);
-    let b_ = Point3::new(0.0, 0.1, 0.0);
-    let c_ = Point3::new(0.1, -0.1, 0.0);
     window.set_line_width(2.0);
 
     let mut i0 = window.add_circle(25.0);
@@ -150,7 +104,6 @@ fn main() {
         let (theta, phi, psi) = rb.rotation().euler_angles();
         let angular_velocities =
             rotation(vector![theta, phi, psi]).transpose() * rb.angvel().clone();
-        let linvel = rb.linvel().xyz();
         let b = 1.0;
 
         let event = rx.try_recv();
@@ -167,7 +120,7 @@ fn main() {
 
         let inputs_pid = pid(
             k,
-            L,
+            l,
             angular_velocities.x,
             angular_velocities.y,
             angular_velocities.z,
@@ -178,8 +131,8 @@ fn main() {
             last_yaw,
         );
         inputs += inputs_pid;
-        let acc = acceleration(inputs, vector![theta, phi, psi], linvel, 1.0, k, 0.00);
-        let frame_torque = torque(inputs, L, 1.00, k);
+        let acc = acceleration(inputs, vector![theta, phi, psi], 1.0, k);
+        let frame_torque = torque(inputs, l, 1.00, k);
         let world_torque = rotation(vector![theta, phi, psi]) * frame_torque;
 
         rb.reset_forces(true);
@@ -196,8 +149,6 @@ fn main() {
         );
         c.set_local_translation(Translation { vector: position });
 
-        let rotation = kiss3d::nalgebra::Vector3::new(1.0, 0.0, 0.0).normalize();
-        let rotation_unit = kiss3d::nalgebra::Unit::new_normalize(rotation);
         let (roll, pitch, yaw) = ball_body.rotation().euler_angles();
         c.set_local_rotation(UnitQuaternion::from_euler_angles(roll, pitch, yaw));
         y.set_local_translation(Translation { vector: position });
@@ -213,8 +164,8 @@ fn main() {
         let horizontal_velocity =
             (ball_body.linvel().x.powi(2) + ball_body.linvel().z.powi(2)).sqrt();
         let altitude = ball_body.position().translation.y;
-        let X = ball_body.position().translation.x;
-        let Z = ball_body.position().translation.z;
+        let x_position = ball_body.position().translation.x;
+        let z_position = ball_body.position().translation.z;
         let rolld = roll.to_degrees();
         let pitchd = pitch.to_degrees();
         let yawd = yaw.to_degrees();
@@ -226,8 +177,8 @@ fn main() {
         Horizontal velocity = {horizontal_velocity:.2}\n\
         Thrust = {thrust:.2}\n\
         Alt. = {altitude:.2}\n\
-        X = {X:.2}\n\
-        Z = {Z:.2}\n\
+        X = {x_position:.2}\n\
+        Z = {z_position:.2}\n\
         Roll = {rolld:.2}\n\
         Pitch = {pitchd:.2}\n\
         Yaw = {yawd:.2}\n\

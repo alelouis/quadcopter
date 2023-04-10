@@ -1,23 +1,18 @@
-use gilrs::{Axis, Button, Event, EventType, Gilrs};
-use nalgebra::vector;
+use gilrs::{Axis, Event, EventType, Gilrs};
 use std::sync::mpsc::Sender;
 use std::{thread, time};
 
 pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f32>)>) {
     let mut gilrs = Gilrs::new().unwrap();
 
-    let mut active_gamepad = None;
-
     loop {
         thread::sleep(time::Duration::from_millis((1000.0 / 60.0) as u64));
-        // Examine new events
-        let mut last_event: Option<Event> = None;
         // throttle, pitch, roll, yaw
         let mut last_events: (Option<f32>, Option<f32>, Option<f32>, Option<f32>) =
             (None, None, None, None);
-        while let Some(Event { id, event, time }) = gilrs.next_event() {
+        while let Some(Event { event, .. }) = gilrs.next_event() {
             match event {
-                EventType::AxisChanged(axis, value, code) => match axis {
+                EventType::AxisChanged(axis, value, ..) => match axis {
                     Axis::LeftStickX => {
                         // Roll [-1, 1]
                         last_events.2 = Some(value);
@@ -32,14 +27,12 @@ pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f3
                     }
                     _ => {}
                 },
-                EventType::ButtonChanged(button, value, code) => {
+                EventType::ButtonChanged(_, value, ..) => {
                     // Throttle [0, 1]
                     last_events.0 = Some(value);
                 }
                 _ => {}
             }
-            last_event = Some(Event { id, event, time });
-            active_gamepad = Some(id);
         }
 
         tx.send(last_events).expect("Couldn't send from thread");
