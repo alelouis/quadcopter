@@ -4,6 +4,7 @@ use nalgebra::{SMatrix, Vector4};
 use rapier3d::prelude::*;
 
 pub struct Simulation {
+    // Ugly wrap of rapier3d physics engine components
     gravity: SMatrix<Real, 3, 1>,
     integration_parameters: IntegrationParameters,
     physics_pipeline: PhysicsPipeline,
@@ -20,6 +21,7 @@ pub struct Simulation {
 
 #[derive(Copy, Clone)]
 pub struct Constants {
+    // #physics
     pub(crate) g: Real,
     pub(crate) l: Real,
     pub(crate) k: Real,
@@ -39,10 +41,7 @@ impl Simulation {
         let mut rigid_body_set = RigidBodySet::new();
         let mut collider_set = ColliderSet::new();
 
-        let floor = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
-        collider_set.insert(floor);
-
-        // Create the drone's rigid body
+        // Create the drone's rigid body and colliders
         let drone_rb = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 2.0, 0.0])
             .build();
@@ -52,6 +51,10 @@ impl Simulation {
             .build();
         let drone_handle = rigid_body_set.insert(drone_rb);
         collider_set.insert_with_parent(drone_collider, drone_handle, &mut rigid_body_set);
+
+        // Let the body hit the floor
+        let floor = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
+        collider_set.insert(floor);
 
         Self {
             gravity: vector![0.0, -constants.g, 0.0],
@@ -70,6 +73,7 @@ impl Simulation {
     }
 
     pub fn step(&mut self) {
+        // rapier physics engine step
         let physics_hooks = ();
         let event_handler = ();
         self.physics_pipeline.step(
@@ -95,9 +99,14 @@ impl Simulation {
 }
 
 pub fn update_physics(inputs: Vector4<Real>, rb: &mut RigidBody, constants: Constants) {
+    // Compute new acceleration and torque from PID correction inputs
     let (roll, pitch, yaw) = rb.rotation().euler_angles();
+
+    // Get acceleration in world frame
     let acceleration =
         compute_acceleration(inputs, vector![roll, pitch, yaw], constants.m, constants.k);
+
+    // Get torque in world frame
     let frame_torque = compute_torque(inputs, constants.l, constants.b, constants.k);
     let world_torque = get_rotation_matrix(vector![roll, pitch, yaw]) * frame_torque;
 

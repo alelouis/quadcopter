@@ -25,6 +25,8 @@ pub fn update_commands(
     mut command: &mut Command,
     rx: &Receiver<(Option<f32>, Option<f32>, Option<f32>, Option<f32>)>,
 ) {
+    // Get event from controller thread and update if new command was sent for either throttle,
+    // roll, pitch or yaw.
     let event = rx.try_recv();
     match event {
         Ok((throttle, pitch, roll, yaw)) => {
@@ -38,13 +40,19 @@ pub fn update_commands(
 }
 
 pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f32>)>) {
+    // Currently tested with Radiomaster ZORRO RF radio controller.
+    // Of course, you would need to have a valid model and USB joystick mode enabled.
+
+    // Get controllers
     let mut gilrs = Gilrs::new().unwrap();
 
+    // Polls for new events
     loop {
+        // Who's need more than 60 fps for control ?
         thread::sleep(time::Duration::from_millis((1000.0 / 60.0) as u64));
-        // throttle, pitch, roll, yaw
         let mut last_events: (Option<f32>, Option<f32>, Option<f32>, Option<f32>) =
             (None, None, None, None);
+
         while let Some(Event { event, .. }) = gilrs.next_event() {
             match event {
                 EventType::AxisChanged(axis, value, ..) => match axis {
@@ -70,6 +78,7 @@ pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f3
             }
         }
 
+        // Send tuple (throttle, pitch, roll, yaw)
         tx.send(last_events).expect("Couldn't send from thread");
     }
 }
