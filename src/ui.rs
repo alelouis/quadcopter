@@ -29,8 +29,20 @@ pub fn setup_ui() -> Graphical {
     let drone_normal_vec = window.add_cube(0.01, 0.01, 10.0);
 
     // Floor
-    window.add_cube(10.0, 0.01, 0.01);
-    window.add_cube(0.01, 10.0, 0.01);
+    for x_pos in -100..100 {
+        let mut cube = window.add_cube(0.01, 200.0, 0.01);
+        cube.set_local_translation(Translation {
+            vector: Vector3::new(x_pos as f32, 0.0, 0.0),
+        });
+    }
+    for x_pos in -100..100 {
+        let mut cube = window.add_cube(200.0, 0.01, 0.01);
+        cube.set_local_translation(Translation {
+            vector: Vector3::new(0.0, x_pos as f32, 0.0),
+        });
+    }
+    //window.add_cube(10.0, 0.01, 0.01);
+    //window.add_cube(0.01, 10.0, 0.01);
 
     // Camera & lights
     window.set_light(Light::StickToCamera);
