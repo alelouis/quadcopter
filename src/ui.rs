@@ -105,7 +105,7 @@ pub fn update_ui(graphical: &mut Graphical, drone_rb_ref: &RigidBody, inputs: SM
     graphical.window.draw_text(
         text,
         &Point2::new(100.0, 100.0),
-        40.0,
+        60.0,
         &graphical.font,
         &Point3::new(1.0, 1.0, 1.0),
     );
