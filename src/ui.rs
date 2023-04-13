@@ -1,6 +1,6 @@
 use kiss3d::camera::FirstPerson;
 use kiss3d::light::Light;
-use kiss3d::nalgebra::{Point2, Point3, Translation, UnitQuaternion};
+use kiss3d::nalgebra::{Point2, Point3, Translation, UnitQuaternion, Vector3};
 use kiss3d::scene::SceneNode;
 use kiss3d::text::Font;
 use kiss3d::window::Window;
@@ -24,18 +24,20 @@ pub fn setup_ui() -> Graphical {
     let font = kiss3d::text::Font::default();
 
     // Drone
-    let mut drone_object = window.add_cube(1.0, 0.1, 1.0);
-    drone_object.set_color(0.0, 1.0, 0.0);
-    let drone_normal_vec = window.add_cube(0.01, 10.0, 0.01);
+    let mut drone_object = window.add_cube(1.0, 1.0, 0.1);
+    drone_object.set_color(1.0, 0.0, 0.0);
+    let drone_normal_vec = window.add_cube(0.01, 0.01, 10.0);
 
     // Floor
     window.add_cube(10.0, 0.01, 0.01);
-    window.add_cube(0.01, 0.01, 10.0);
+    window.add_cube(0.01, 10.0, 0.01);
 
     // Camera & lights
     window.set_light(Light::StickToCamera);
     let eye = Point3::new(5.0f32, 5.0, 5.0);
     let mut arc_ball = FirstPerson::new(eye, Point3::origin());
+    arc_ball.set_up_axis(Vector3::new(0.0, 0.0, 1.0));
+
     arc_ball.unbind_movement_keys();
 
     let graphical = Graphical {

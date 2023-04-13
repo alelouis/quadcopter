@@ -33,7 +33,7 @@ pub fn compute_acceleration(
     k: Real,
 ) -> Vector3<Real> {
     let quat = rapier3d::na::UnitQuaternion::from_euler_angles(angles.x, angles.y, angles.z);
-    let normal = quat.transform_vector(&Vector3::new(0.0, 1.0, 0.0));
+    let normal = quat.transform_vector(&Vector3::new(0.0, 0.0, 1.0));
     let t = normal * thrust(inputs, k);
     //let Fd = -kd * xdot;
     let a = 1.0 / m * t;

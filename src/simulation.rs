@@ -43,21 +43,21 @@ impl Simulation {
 
         // Create the drone's rigid body and colliders
         let drone_rb = RigidBodyBuilder::dynamic()
-            .translation(vector![0.0, 2.0, 0.0])
+            .translation(vector![0.0, 0.0, 2.0])
             .build();
 
-        let drone_collider = ColliderBuilder::cuboid(1.0, 0.2, 1.0)
+        let drone_collider = ColliderBuilder::cuboid(1.0, 1.0, 0.2)
             .mass(constants.m)
             .build();
         let drone_handle = rigid_body_set.insert(drone_rb);
         collider_set.insert_with_parent(drone_collider, drone_handle, &mut rigid_body_set);
 
         // Let the body hit the floor
-        let floor = ColliderBuilder::cuboid(100.0, 0.1, 100.0).build();
+        let floor = ColliderBuilder::cuboid(100.0, 100., 0.1).build();
         collider_set.insert(floor);
 
         Self {
-            gravity: vector![0.0, -constants.g, 0.0],
+            gravity: vector![0.0, 0.0, -constants.g],
             rigid_body_set,
             collider_set,
             integration_parameters: Default::default(),
