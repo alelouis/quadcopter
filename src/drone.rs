@@ -6,7 +6,7 @@ pub fn thrust(inputs: Vector4<Real>, k: Real) -> Real {
     k * inputs.sum()
 }
 
-pub fn torque(inputs: Vector4<Real>, l: Real, b: Real, k: Real) -> Vector3<Real> {
+pub fn compute_torque(inputs: Vector4<Real>, l: Real, b: Real, k: Real) -> Vector3<Real> {
     let tau = vector![
         l * k * (inputs[0] - inputs[2]),
         l * k * (inputs[1] - inputs[3]),
@@ -15,7 +15,7 @@ pub fn torque(inputs: Vector4<Real>, l: Real, b: Real, k: Real) -> Vector3<Real>
     tau
 }
 
-pub fn rotation(angles: Vector3<Real>) -> Matrix3<Real> {
+pub fn get_rotation_matrix(angles: Vector3<Real>) -> Matrix3<Real> {
     let phi = angles[0];
     let theta = angles[1];
     let psi = angles[2];
@@ -26,7 +26,7 @@ pub fn rotation(angles: Vector3<Real>) -> Matrix3<Real> {
     r
 }
 
-pub fn acceleration(
+pub fn compute_acceleration(
     inputs: Vector4<Real>,
     angles: Vector3<Real>,
     m: Real,
