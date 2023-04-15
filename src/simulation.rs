@@ -53,7 +53,7 @@ impl Simulation {
         collider_set.insert_with_parent(drone_collider, drone_handle, &mut rigid_body_set);
 
         // Let the body hit the floor
-        let floor = ColliderBuilder::cuboid(100.0, 100., 0.1).build();
+        let floor = ColliderBuilder::cuboid(2000.0, 2000., 0.1).build();
         collider_set.insert(floor);
 
         Self {
