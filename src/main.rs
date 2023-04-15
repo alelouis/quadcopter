@@ -3,7 +3,7 @@ mod drone;
 mod pid;
 mod sensors;
 mod simulation;
-mod ui;
+mod view;
 
 use controller::get_commands;
 use pid::pid;
@@ -16,10 +16,10 @@ use zmq::{Context, Error, Message};
 
 fn main() {
     // Setup UI
-    let mut graphical = ui::setup_ui();
+    let mut graphical = view::setup_ui();
 
     // Initialize simulation
-    let constants = simulation::Constants::new(9.81, 1.0, 0.1, 1.0, 1.0, 1.0);
+    let constants = simulation::Constants::new(9.81, 1.0, 0.1, 1.0, 0.650, 1.0);
     let mut sim = simulation::Simulation::new(constants);
 
     // Start controller command polling
@@ -66,6 +66,6 @@ fn main() {
         simulation::update_physics(inputs, rb, constants);
 
         // Update UI
-        ui::update_ui(&mut graphical, rb, inputs);
+        view::update_ui(&mut graphical, rb, inputs);
     }
 }
