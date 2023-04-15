@@ -60,11 +60,11 @@ pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f3
                 EventType::AxisChanged(axis, value, ..) => match axis {
                     Axis::LeftStickX => {
                         // Roll [-1, 1]
-                        last_events.3 = Some(value);
+                        last_events.1 = Some(value);
                     }
                     Axis::LeftStickY => {
                         // Pitch [-1, 1]
-                        last_events.1 = Some(value);
+                        last_events.3 = Some(-value);
                     }
                     Axis::RightStickX => {
                         // Yaw [-1, 1]
