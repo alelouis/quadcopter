@@ -1,9 +1,10 @@
-# **quadcopter simulation**
+# **Quadcopter simulator**
 ![rustc](https://img.shields.io/badge/rustc-1.67.0-important)
 
 **Implementation of quadcopter flight dynamics & control.**  
 Experimentation using [rapier](https://rapier.rs/) physics engine, [kiss3D](https://docs.rs/kiss3d/0.35.0/kiss3d/) 3D renderer as well as [egui](https://docs.rs/egui/0.20.1/egui/) for metrics visualization.
 
+https://user-images.githubusercontent.com/6841652/232230643-e0e1acb0-3838-47b2-9875-82704c61d059.mp4
 
 ## **What it does**
 The main idea was to connect several things in order to create a toy drone 3D simulator :
