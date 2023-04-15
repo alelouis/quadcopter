@@ -89,32 +89,28 @@ impl eframe::App for GraphView {
             let yaw_plot_points: PlotPoints = PlotPoints::from(yaw_points);
 
             // Define plot elements
-            let throttle_line = Points::new(throttle_plot_points)
+            let throttle_line = Line::new(throttle_plot_points)
                 .color(Color32::from_rgb(100, 100, 200))
-                .radius(2.0)
                 .name("Throttle");
 
-            let pitch_line = Points::new(pitch_plot_points)
+            let pitch_line = Line::new(pitch_plot_points)
                 .color(Color32::from_rgb(200, 100, 200))
-                .radius(2.0)
                 .name("Pitch");
 
-            let roll_line = Points::new(roll_plot_points)
+            let roll_line = Line::new(roll_plot_points)
                 .color(Color32::from_rgb(100, 200, 100))
-                .radius(2.0)
                 .name("Roll");
 
-            let yaw_line = Points::new(yaw_plot_points)
+            let yaw_line = Line::new(yaw_plot_points)
                 .color(Color32::from_rgb(255, 255, 0))
-                .radius(2.0)
                 .name("Yaw");
 
             // Plot lines
             plot.show(ui, |plot_ui| {
-                plot_ui.points(throttle_line);
-                plot_ui.points(pitch_line);
-                plot_ui.points(roll_line);
-                plot_ui.points(yaw_line);
+                plot_ui.line(throttle_line);
+                plot_ui.line(pitch_line);
+                plot_ui.line(roll_line);
+                plot_ui.line(yaw_line);
             });
         });
     }
