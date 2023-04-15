@@ -52,7 +52,15 @@ fn wrap_with_time(time: &Vec<f64>, vec: &Vec<f64>) -> Vec<[f64; 2]> {
 impl eframe::App for GraphView {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         let mut msg = zmq::Message::new();
-        self.socket.recv(&mut msg, 0).unwrap();
+        loop {
+            let msg_recv = self.socket.recv_msg(0);
+            if msg_recv.is_ok() {
+                msg = msg_recv.unwrap();
+            } else {
+                break;
+            }
+        }
+
         let (lv, _rest) = LayoutVerified::<_, Command>::new_from_prefix(msg.as_bytes()).unwrap();
         let parsed_one = lv.into_ref();
         self.socket.send("OK", 0).unwrap();

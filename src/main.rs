@@ -41,11 +41,13 @@ fn main() {
         controller::update_commands(&mut command, &rx);
 
         // Send command to socket
+
         requester
-            .send(command.as_bytes(), 0)
-            .expect("Couldn't send commands");
+            .send(command.as_bytes(), zmq::DONTWAIT)
+            .unwrap_or(());
         let mut msg = Message::new();
-        requester.recv(&mut msg, 0).unwrap();
+
+        requester.recv(&mut msg, zmq::DONTWAIT).unwrap_or(());
 
         // Sense gyroscopic information
         let rb = sim.get_drone_rb();
