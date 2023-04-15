@@ -1,8 +1,10 @@
 use gilrs::{Axis, Event, EventType, Gilrs};
 use std::sync::mpsc::{Receiver, Sender};
 use std::{thread, time};
+use zerocopy::{AsBytes, FromBytes, LayoutVerified};
 
-#[derive(Copy, Clone)]
+#[repr(C)]
+#[derive(Copy, Clone, Debug, AsBytes, FromBytes)]
 pub struct Command {
     pub throttle: f32,
     pub roll: f32,

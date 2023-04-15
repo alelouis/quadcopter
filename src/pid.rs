@@ -13,7 +13,7 @@ pub fn pid(
     // Still an only P controller for now...
     // TODO: Integration and derivative components of error filtering
     // PID coefficients
-    let kp = 0.5;
+    let kp = 2.0;
     // let ki = 0.5;
     // let kd = 0.5;
 

@@ -11,6 +11,8 @@ use pid::pid;
 use crate::controller::Command;
 use std::sync::mpsc::channel;
 use std::thread;
+use zerocopy::AsBytes;
+use zmq::{Context, Error, Message};
 
 fn main() {
     // Setup UI
@@ -25,6 +27,11 @@ fn main() {
     thread::spawn(move || get_commands(tx));
     let mut command = Command::new();
 
+    // Client socket
+    let context = Context::new();
+    let requester = context.socket(zmq::REQ).unwrap();
+    assert!(requester.connect("tcp://localhost:5555").is_ok());
+
     // Simulation loop
     while !graphical.window.should_close() {
         // Rapier update
@@ -32,6 +39,13 @@ fn main() {
 
         // Get command events from controller
         controller::update_commands(&mut command, &rx);
+
+        // Send command to socket
+        requester
+            .send(command.as_bytes(), 0)
+            .expect("Couldn't send commands");
+        let mut msg = Message::new();
+        requester.recv(&mut msg, 0).unwrap();
 
         // Sense gyroscopic information
         let rb = sim.get_drone_rb();

@@ -46,7 +46,7 @@ pub fn setup_ui() -> Graphical {
 
     // Camera & lights
     window.set_light(Light::StickToCamera);
-    let eye = Point3::new(5.0f32, 5.0, 5.0);
+    let eye = Point3::new(5.0, 5.0, 5.0);
     let mut arc_ball = FirstPerson::new(eye, Point3::origin());
     arc_ball.set_up_axis(Vector3::new(0.0, 0.0, 1.0));
 
@@ -85,7 +85,7 @@ pub fn update_ui(graphical: &mut Graphical, drone_rb_ref: &RigidBody, inputs: SM
         .set_local_rotation(UnitQuaternion::from_euler_angles(roll, pitch, yaw));
 
     graphical.arc_ball.look_at(
-        Point3::from(position + kiss3d::nalgebra::Vector3::new(5.0, 5.0, 5.0)),
+        Point3::from(position + kiss3d::nalgebra::Vector3::new(0.0, 7.0, 3.0)),
         Point3::from(position),
     );
     //
