@@ -66,7 +66,7 @@ impl QuadState {
 }
 
 fn vector_to_f64(vec: Vector3<Real>) -> [f32; 3] {
-    [vec.x as f32, vec.y as f32, vec.y as f32]
+    [vec.x as f32, vec.y as f32, vec.z as f32]
 }
 
 pub fn thrust(inputs: Vector4<Real>, k: Real) -> Real {
