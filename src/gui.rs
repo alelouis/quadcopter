@@ -6,6 +6,7 @@ extern crate itertools_num;
 use itertools_num::linspace;
 
 use crate::controller::Command;
+use crate::drone::QuadState;
 use std::sync::mpsc::Receiver;
 use zerocopy::{AsBytes, LayoutVerified};
 use zmq::Socket;
