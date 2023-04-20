@@ -39,8 +39,8 @@ impl QuadState {
     ) {
         self.position = vector_to_f64(rb.position().translation.vector);
         self.rotation = vector_to_f64({
-            let (roll, pitch, yaw) = rb.position().rotation.euler_angles();
-            Vector3::new(roll, pitch, yaw)
+            let (roll, pitch, yaw) = rb.rotation().euler_angles();
+            Vector3::new(roll, pitch, yaw) // why is this wrong ?
         });
         self.velocity = vector_to_f64(rb.linvel().xyz());
         self.angular_velocity = vector_to_f64(

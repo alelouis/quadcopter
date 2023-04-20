@@ -7,18 +7,32 @@ use itertools_num::linspace;
 
 use crate::controller::Command;
 use crate::drone::QuadState;
+use std::collections::HashMap;
+use std::fmt;
 use std::sync::mpsc::Receiver;
 use zerocopy::{AsBytes, LayoutVerified};
 use zmq::Socket;
+use Signal::{Pitch, Roll, Throttle, Yaw};
+
+#[derive(Eq, Hash, PartialEq, Debug)]
+enum Signal {
+    Throttle,
+    Roll,
+    Pitch,
+    Yaw,
+}
+
+impl fmt::Display for Signal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 pub struct GraphView {
     label: String,
     initialized: bool,
     socket: Socket,
-    throttle: Vec<f64>,
-    pitch: Vec<f64>,
-    roll: Vec<f64>,
-    yaw: Vec<f64>,
+    metrics: HashMap<Signal, Vec<f64>>,
 }
 
 impl GraphView {
@@ -26,19 +40,18 @@ impl GraphView {
         let context = zmq::Context::new();
         let responder = context.socket(zmq::REP).unwrap();
         assert!(responder.bind("tcp://*:5555").is_ok());
-        let throttle = vec![];
-        let pitch = vec![];
-        let roll = vec![];
-        let yaw = vec![];
+        let mut metrics: HashMap<Signal, Vec<f64>> = HashMap::new();
+        let keys = [Throttle, Roll, Pitch, Yaw];
+
+        for k in keys {
+            metrics.insert(k, vec![]);
+        }
 
         Self {
             label: "Quadcopter Logs".to_owned(),
             initialized: false,
             socket: responder,
-            throttle,
-            pitch,
-            roll,
-            yaw,
+            metrics,
         }
     }
 }
@@ -64,10 +77,18 @@ impl eframe::App for GraphView {
         let (lv, _rest) = LayoutVerified::<_, QuadState>::new_from_prefix(msg.as_bytes()).unwrap();
         let parsed_one = lv.into_ref();
         self.socket.send("OK", 0).unwrap();
-        self.throttle.push(parsed_one.input_throttle as f64);
-        self.pitch.push(parsed_one.input_pitch as f64);
-        self.roll.push(parsed_one.input_roll as f64);
-        self.yaw.push(parsed_one.input_yaw as f64);
+        self.metrics
+            .entry(Throttle)
+            .and_modify(|v| v.push(parsed_one.input_throttle as f64));
+        self.metrics
+            .entry(Roll)
+            .and_modify(|v| v.push(parsed_one.rotation[0] as f64));
+        self.metrics
+            .entry(Pitch)
+            .and_modify(|v| v.push(parsed_one.rotation[1] as f64));
+        self.metrics
+            .entry(Yaw)
+            .and_modify(|v| v.push(parsed_one.rotation[2] as f64));
 
         CentralPanel::default().show(ctx, |ui| {
             // Update frame
@@ -76,41 +97,24 @@ impl eframe::App for GraphView {
             // Declare plot
             let mut plot = Plot::new("y_plot").legend(Legend::default());
 
-            // Convert x position data to PlotPoints
-            let time = linspace::<f64>(0., 1., self.throttle.len()).collect();
-            let throttle_points = wrap_with_time(&time, &self.throttle);
-            let pitch_points = wrap_with_time(&time, &self.pitch);
-            let roll_points = wrap_with_time(&time, &self.roll);
-            let yaw_points = wrap_with_time(&time, &self.yaw);
+            let signals_to_plot = [Yaw];
+            let time = linspace::<f64>(0., 1., self.metrics[&Throttle].len()).collect();
+            let mut lines = vec![];
 
-            let throttle_plot_points: PlotPoints = PlotPoints::from(throttle_points);
-            let pitch_plot_points: PlotPoints = PlotPoints::from(pitch_points);
-            let roll_plot_points: PlotPoints = PlotPoints::from(roll_points);
-            let yaw_plot_points: PlotPoints = PlotPoints::from(yaw_points);
-
-            // Define plot elements
-            let throttle_line = Line::new(throttle_plot_points)
-                .color(Color32::from_rgb(100, 100, 200))
-                .name("Throttle");
-
-            let pitch_line = Line::new(pitch_plot_points)
-                .color(Color32::from_rgb(200, 100, 200))
-                .name("Pitch");
-
-            let roll_line = Line::new(roll_plot_points)
-                .color(Color32::from_rgb(100, 200, 100))
-                .name("Roll");
-
-            let yaw_line = Line::new(yaw_plot_points)
-                .color(Color32::from_rgb(255, 255, 0))
-                .name("Yaw");
+            for s in signals_to_plot {
+                let points = wrap_with_time(&time, &self.metrics[&s]);
+                let plot_points: PlotPoints = PlotPoints::from(points);
+                let line = Line::new(plot_points)
+                    .color(Color32::from_rgb(200, 200, 200))
+                    .name(s.to_string());
+                lines.push(line);
+            }
 
             // Plot lines
             plot.show(ui, |plot_ui| {
-                plot_ui.line(throttle_line);
-                plot_ui.line(pitch_line);
-                plot_ui.line(roll_line);
-                plot_ui.line(yaw_line);
+                for line in lines {
+                    plot_ui.line(line);
+                }
             });
         });
     }
