@@ -109,7 +109,6 @@ pub fn update_ui(graphical: &mut Graphical, drone_rb_ref: &RigidBody, inputs: SM
         .set_local_rotation(UnitQuaternion::from_euler_angles(roll, pitch, yaw));
 
     // Update horizon
-
     graphical
         .drone_horizon_vec
         .set_local_translation(Translation {
@@ -121,7 +120,7 @@ pub fn update_ui(graphical: &mut Graphical, drone_rb_ref: &RigidBody, inputs: SM
 
     graphical.arc_ball.look_at(
         Point3::from(position + 0.5 * normal),
-        Point3::from(position - 1000.0 * heading),
+        Point3::from(position - 10.0 * heading + 2.0 * normal),
     );
     //
     graphical.window.render_with_camera(&mut graphical.arc_ball);
