@@ -60,14 +60,13 @@ impl eframe::App for GraphView {
                 break;
             }
         }
-
-        let (lv, _rest) = LayoutVerified::<_, Command>::new_from_prefix(msg.as_bytes()).unwrap();
+        let (lv, _rest) = LayoutVerified::<_, QuadState>::new_from_prefix(msg.as_bytes()).unwrap();
         let parsed_one = lv.into_ref();
         self.socket.send("OK", 0).unwrap();
-        self.throttle.push(parsed_one.throttle as f64);
-        self.pitch.push(parsed_one.pitch as f64);
-        self.roll.push(parsed_one.roll as f64);
-        self.yaw.push(parsed_one.yaw as f64);
+        self.throttle.push(parsed_one.input_throttle as f64);
+        self.pitch.push(parsed_one.input_pitch as f64);
+        self.roll.push(parsed_one.input_roll as f64);
+        self.yaw.push(parsed_one.input_yaw as f64);
 
         CentralPanel::default().show(ctx, |ui| {
             // Update frame

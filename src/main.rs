@@ -12,20 +12,21 @@ use crate::controller::Command;
 use std::sync::mpsc::channel;
 use std::thread;
 use zerocopy::AsBytes;
-use zmq::{Context, Error, Message};
+use zmq::{Context, Message};
 
 fn main() {
     // Setup UI
     let mut graphical = view::setup_ui();
 
     // Initialize simulation
-    let constants = simulation::Constants::new(9.81, 1.0, 0.1, 1.0, 0.650, 1.0);
+    let constants = simulation::Constants::new(9.81, 1.0, 1.0, 1.0, 0.650, 0.1);
     let mut sim = simulation::Simulation::new(constants);
 
     // Start controller command polling
     let (tx, rx) = channel();
     thread::spawn(move || get_commands(tx));
     let mut command = Command::new();
+    let mut quad_state = drone::QuadState::new();
 
     // Client socket
     let context = Context::new();
@@ -33,21 +34,13 @@ fn main() {
     assert!(requester.connect("tcp://localhost:5555").is_ok());
 
     // Simulation loop
+
     while !graphical.window.should_close() {
         // Rapier update
         sim.step();
 
         // Get command events from controller
         controller::update_commands(&mut command, &rx);
-
-        // Send command to socket
-
-        requester
-            .send(command.as_bytes(), zmq::DONTWAIT)
-            .unwrap_or(());
-        let mut msg = Message::new();
-
-        requester.recv(&mut msg, zmq::DONTWAIT).unwrap_or(());
 
         // Sense gyroscopic information
         let rb = sim.get_drone_rb();
@@ -65,7 +58,18 @@ fn main() {
         // Compute acceleration and torque from inputs and apply to rigidbody
         simulation::update_physics(inputs, rb, constants);
 
+        // Update drone state
+        quad_state.update(constants, inputs, rb, command);
+
         // Update UI
         view::update_ui(&mut graphical, rb, inputs);
+
+        // Send command to socket
+        requester
+            .send(quad_state.as_bytes(), zmq::DONTWAIT)
+            .unwrap_or(());
+        let mut msg = Message::new();
+
+        requester.recv(&mut msg, zmq::DONTWAIT).unwrap_or(());
     }
 }

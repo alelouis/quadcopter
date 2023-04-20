@@ -1,7 +1,9 @@
 extern crate zmq;
 
 mod controller;
+mod drone;
 mod gui;
+mod simulation;
 
 use crate::controller::Command;
 use std::time::Duration;

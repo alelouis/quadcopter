@@ -23,9 +23,9 @@ pub struct Simulation {
 pub struct Constants {
     // #physics
     pub(crate) g: Real,
-    pub(crate) l: Real,
-    pub(crate) k: Real,
-    pub(crate) b: Real,
+    pub l: Real,
+    pub k: Real,
+    pub b: Real,
     pub(crate) m: Real,
     pub(crate) dt: Real,
 }
@@ -113,6 +113,6 @@ pub fn update_physics(inputs: Vector4<Real>, rb: &mut RigidBody, constants: Cons
     // physics update
     rb.reset_forces(true);
     rb.reset_torques(true);
-    rb.add_force(constants.dt * acceleration, true);
-    rb.add_torque(constants.dt * world_torque, true);
+    rb.add_force(acceleration, true);
+    rb.add_torque(world_torque, true);
 }
