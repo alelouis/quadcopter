@@ -17,6 +17,7 @@ eframe = { version = "0.20.1", features = ["persistence"] }
 serde = { version = "1", features = ["derive"] }
 itertools = "0.10.5"
 itertools-num = "0.1.3"
+colorous = "1.0.10"
 
 [[bin]]
 name = "logs"

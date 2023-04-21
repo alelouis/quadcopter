@@ -24,6 +24,7 @@ pub struct QuadState {
     pub input_roll: f32,
     pub input_pitch: f32,
     pub input_yaw: f32,
+    pub rotors_velocities: [f32; 4],
 }
 
 impl QuadState {
@@ -62,6 +63,7 @@ impl QuadState {
         self.input_roll = cmd.roll;
         self.input_pitch = cmd.pitch;
         self.input_yaw = cmd.yaw;
+        self.rotors_velocities = [inputs.x, inputs.y, inputs.z, inputs.w];
     }
 }
 

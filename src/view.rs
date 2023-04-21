@@ -1,4 +1,4 @@
-use kiss3d::camera::FirstPerson;
+use kiss3d::camera::{Camera, FirstPerson};
 use kiss3d::light::Light;
 use kiss3d::nalgebra::{Point2, Point3, Translation, UnitQuaternion, Vector3};
 use kiss3d::scene::SceneNode;
@@ -21,7 +21,7 @@ pub struct Graphical {
 
 pub fn setup_ui() -> Graphical {
     // Window and general setup
-    let mut window = Window::new_with_size("QuadCopter", 1600, 1000);
+    let mut window = Window::new_with_size("QuadCopter", 1000, 600);
     window.set_line_width(2.0);
     let font = kiss3d::text::Font::default();
 
@@ -54,7 +54,13 @@ pub fn setup_ui() -> Graphical {
     // Camera & lights
     window.set_light(Light::StickToCamera);
     let eye = Point3::new(0.0, 0.0, 0.0);
-    let mut arc_ball = FirstPerson::new(eye, Point3::origin());
+    let mut arc_ball = FirstPerson::new_with_frustrum(
+        std::f32::consts::PI / 3.0,
+        0.1,
+        1024.0,
+        eye,
+        Point3::origin(),
+    );
 
     arc_ball.unbind_movement_keys();
 
@@ -112,7 +118,7 @@ pub fn update_ui(graphical: &mut Graphical, drone_rb_ref: &RigidBody, inputs: SM
     graphical
         .drone_horizon_vec
         .set_local_translation(Translation {
-            vector: position + -10.0 * heading + 0.5 * normal,
+            vector: position + -10.0 * heading + 4.0 * normal,
         });
     graphical
         .drone_horizon_vec
@@ -146,7 +152,7 @@ pub fn update_ui(graphical: &mut Graphical, drone_rb_ref: &RigidBody, inputs: SM
 
     graphical.window.draw_text(
         text,
-        &Point2::new(1200.0 * 4.0, 450.0 * 4.0),
+        &Point2::new(700.0 * 4.0, 300.0 * 4.0),
         80.0,
         &graphical.font,
         &Point3::new(1.0, 1.0, 1.0),
