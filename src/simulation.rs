@@ -110,9 +110,13 @@ pub fn update_physics(inputs: Vector4<Real>, rb: &mut RigidBody, constants: Cons
     let frame_torque = compute_torque(inputs, constants.l, constants.b, constants.k);
     let world_torque = get_rotation_matrix(vector![roll, pitch, yaw]) * frame_torque;
 
+    let linear_velocity = rb.linvel().xyz();
+    let kd = 0.1;
+
     // physics update
     rb.reset_forces(true);
     rb.reset_torques(true);
     rb.add_force(acceleration, true);
+    rb.add_force(-kd * linear_velocity, true);
     rb.add_torque(world_torque, true);
 }

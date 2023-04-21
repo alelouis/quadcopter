@@ -19,7 +19,7 @@ fn main() {
     let mut graphical = view::setup_ui();
 
     // Initialize simulation
-    let constants = simulation::Constants::new(9.81, 1.0, 1.0, 1.0, 0.650, 0.1);
+    let constants = simulation::Constants::new(9.81, 1.0, 1.0, 1.0, 0.650, 1.0);
     let mut sim = simulation::Simulation::new(constants);
 
     // Start controller command polling

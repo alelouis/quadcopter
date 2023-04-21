@@ -27,7 +27,7 @@ pub fn pid(
 
     // Setting minimum thrust to barely uplift
     // TODO: Set exponential rate curve
-    let mut target_thrust = 2.0 + command.throttle * 8.0;
+    let mut target_thrust = 2.0 + command.throttle.sqrt() * 10.0;
     target_thrust /= 4.0;
 
     let b = constants.b;

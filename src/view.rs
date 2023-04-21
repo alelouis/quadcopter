@@ -120,7 +120,7 @@ pub fn update_ui(graphical: &mut Graphical, drone_rb_ref: &RigidBody, inputs: SM
 
     graphical.arc_ball.look_at(
         Point3::from(position + 0.5 * normal),
-        Point3::from(position - 10.0 * heading + 2.0 * normal),
+        Point3::from(position - 10.0 * heading + 4.0 * normal),
     );
     //
     graphical.window.render_with_camera(&mut graphical.arc_ball);
