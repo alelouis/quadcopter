@@ -58,6 +58,10 @@ pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f3
         while let Some(Event { event, .. }) = gilrs.next_event() {
             match event {
                 EventType::AxisChanged(axis, value, ..) => match axis {
+                    Axis::RightStickX => {
+                        // Roll [-1, 1]
+                        last_events.1 = Some(value);
+                    }
                     Axis::LeftStickX => {
                         // Pitch [-1, 1]
                         last_events.2 = Some(value);
@@ -65,10 +69,6 @@ pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f3
                     Axis::LeftStickY => {
                         // Yaw [-1, 1]
                         last_events.3 = Some(-value);
-                    }
-                    Axis::RightStickX => {
-                        // Roll [-1, 1]
-                        last_events.1 = Some(value);
                     }
                     _ => {}
                 },

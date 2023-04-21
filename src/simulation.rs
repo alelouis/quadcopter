@@ -22,17 +22,26 @@ pub struct Simulation {
 #[derive(Copy, Clone)]
 pub struct Constants {
     // #physics
-    pub(crate) g: Real,
+    pub g: Real,
     pub l: Real,
     pub k: Real,
     pub b: Real,
-    pub(crate) m: Real,
-    pub(crate) dt: Real,
+    pub m: Real,
+    pub dt: Real,
+    pub kd: Real,
 }
 
 impl Constants {
-    pub fn new(g: Real, l: Real, k: Real, b: Real, m: Real, dt: Real) -> Self {
-        Self { g, l, k, b, m, dt }
+    pub fn new(g: Real, l: Real, k: Real, b: Real, m: Real, dt: Real, kd: Real) -> Self {
+        Self {
+            g,
+            l,
+            k,
+            b,
+            m,
+            dt,
+            kd,
+        }
     }
 }
 
@@ -111,12 +120,11 @@ pub fn update_physics(inputs: Vector4<Real>, rb: &mut RigidBody, constants: Cons
     let world_torque = get_rotation_matrix(vector![roll, pitch, yaw]) * frame_torque;
 
     let linear_velocity = rb.linvel().xyz();
-    let kd = 0.2;
 
     // physics update
     rb.reset_forces(true);
     rb.reset_torques(true);
     rb.add_force(acceleration, true);
-    rb.add_force(-kd * linear_velocity, true);
+    rb.add_force(-constants.kd * linear_velocity, true);
     rb.add_torque(world_torque, true);
 }
