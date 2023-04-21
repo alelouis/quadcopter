@@ -46,7 +46,7 @@ impl Simulation {
             .translation(vector![0.0, 0.0, 2.0])
             .build();
 
-        let drone_collider = ColliderBuilder::cuboid(1.0, 1.0, 0.2)
+        let drone_collider = ColliderBuilder::cuboid(0.13, 0.13, 0.05)
             .mass(constants.m)
             .build();
         let drone_handle = rigid_body_set.insert(drone_rb);
@@ -111,7 +111,7 @@ pub fn update_physics(inputs: Vector4<Real>, rb: &mut RigidBody, constants: Cons
     let world_torque = get_rotation_matrix(vector![roll, pitch, yaw]) * frame_torque;
 
     let linear_velocity = rb.linvel().xyz();
-    let kd = 0.1;
+    let kd = 0.2;
 
     // physics update
     rb.reset_forces(true);

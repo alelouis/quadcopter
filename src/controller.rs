@@ -31,7 +31,7 @@ pub fn update_commands(
     // roll, pitch or yaw.
     let event = rx.try_recv();
     match event {
-        Ok((throttle, pitch, roll, yaw)) => {
+        Ok((throttle, roll, pitch, yaw)) => {
             command.throttle = throttle.unwrap_or(command.throttle);
             command.pitch = pitch.unwrap_or(command.pitch);
             command.roll = roll.unwrap_or(command.roll);
@@ -59,16 +59,16 @@ pub fn get_commands(tx: Sender<(Option<f32>, Option<f32>, Option<f32>, Option<f3
             match event {
                 EventType::AxisChanged(axis, value, ..) => match axis {
                     Axis::LeftStickX => {
-                        // Roll [-1, 1]
-                        last_events.1 = Some(value);
+                        // Pitch [-1, 1]
+                        last_events.2 = Some(value);
                     }
                     Axis::LeftStickY => {
-                        // Pitch [-1, 1]
+                        // Yaw [-1, 1]
                         last_events.3 = Some(-value);
                     }
                     Axis::RightStickX => {
-                        // Yaw [-1, 1]
-                        last_events.2 = Some(value);
+                        // Roll [-1, 1]
+                        last_events.1 = Some(value);
                     }
                     _ => {}
                 },

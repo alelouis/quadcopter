@@ -40,14 +40,14 @@ pub fn setup_ui() -> Graphical {
         let mut cube = window.add_cube(linewidth, linelength, linewidth);
         cube.set_color(0.5, 1.0, 0.5);
         cube.set_local_translation(Translation {
-            vector: Vector3::new((10 * x_pos) as f32, 0.0, 0.0),
+            vector: Vector3::new((5 * x_pos) as f32, 0.0, 0.0),
         });
     }
     for x_pos in -100..100 {
         let mut cube = window.add_cube(linelength, linewidth, linewidth);
         cube.set_color(0.5, 1.0, 0.5);
         cube.set_local_translation(Translation {
-            vector: Vector3::new(0.0, (10 * x_pos) as f32, 0.0),
+            vector: Vector3::new(0.0, (5 * x_pos) as f32, 0.0),
         });
     }
 
