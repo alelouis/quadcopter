@@ -32,7 +32,7 @@ pub fn pid(
     let e_psi = kp * (psi_dot + compute_expof(command.roll));
 
     // Simple moment of inertia
-    let i: Matrix3<Real> = Matrix3::identity();
+    let i: Matrix3<Real> = Matrix3::identity() * 1.0;
 
     // Setting minimum thrust to barely uplift
     let mut thurst = 3.0 + command.throttle.sqrt() * 4.0;

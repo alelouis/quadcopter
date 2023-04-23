@@ -1,4 +1,4 @@
-use kiss3d::camera::{Camera, FirstPerson};
+use kiss3d::camera::FirstPerson;
 use kiss3d::light::Light;
 use kiss3d::nalgebra::{Point2, Point3, Translation, UnitQuaternion, Vector3};
 use kiss3d::scene::SceneNode;

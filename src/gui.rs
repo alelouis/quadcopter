@@ -214,8 +214,6 @@ impl eframe::App for GraphView {
 
             let plot_throttle_signal = vec![Throttle];
             let plot_roll_pitch_yaw_signals = vec![Roll, Pitch, Yaw];
-            let plot_pitch_signals = vec![Pitch];
-            let plot_yaw_signals = vec![Yaw];
             let plot_rotor_signals = vec![
                 Rotor1Velocity,
                 Rotor2Velocity,

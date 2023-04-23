@@ -21,14 +21,13 @@ pub struct Simulation {
 
 #[derive(Copy, Clone)]
 pub struct Constants {
-    // #physics
-    pub g: Real,
-    pub l: Real,
-    pub k: Real,
-    pub b: Real,
-    pub m: Real,
-    pub dt: Real,
-    pub kd: Real,
+    pub g: Real,  // Gravitational constant
+    pub l: Real,  //
+    pub k: Real,  //
+    pub b: Real,  //
+    pub m: Real,  // mass
+    pub dt: Real, // delta time
+    pub kd: Real, // Drag force coefficient
 }
 
 impl Constants {
@@ -102,6 +101,7 @@ impl Simulation {
         )
     }
 
+    // Rigidbody handle
     pub fn get_drone_rb(&mut self) -> &mut RigidBody {
         return self.rigid_body_set.get_mut(self.drone_handle).unwrap();
     }
@@ -119,6 +119,7 @@ pub fn update_physics(inputs: Vector4<Real>, rb: &mut RigidBody, constants: Cons
     let frame_torque = compute_torque(inputs, constants.l, constants.b, constants.k);
     let world_torque = get_rotation_matrix(vector![roll, pitch, yaw]) * frame_torque;
 
+    // Get linear velocity for drag force
     let linear_velocity = rb.linvel().xyz();
 
     // physics update

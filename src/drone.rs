@@ -71,10 +71,12 @@ fn vector_to_f64(vec: Vector3<Real>) -> [f32; 3] {
     [vec.x as f32, vec.y as f32, vec.z as f32]
 }
 
+// Thrust is sum of velocities squares
 pub fn thrust(inputs: Vector4<Real>, k: Real) -> Real {
     k * inputs.sum()
 }
 
+// Torque computation from input squared velocities
 pub fn compute_torque(inputs: Vector4<Real>, l: Real, b: Real, k: Real) -> Vector3<Real> {
     let tau = vector![
         l * k * (inputs[0] - inputs[2]),
@@ -84,27 +86,28 @@ pub fn compute_torque(inputs: Vector4<Real>, l: Real, b: Real, k: Real) -> Vecto
     tau
 }
 
+// Rotation matrix from body frame to inertial frame.
 pub fn get_rotation_matrix(angles: Vector3<Real>) -> Matrix3<Real> {
-    let phi = angles[0];
-    let theta = angles[1];
-    let psi = angles[2];
-    let r1 = matrix![1.0, 0.0, 0.0; 0.0, phi.cos(), phi.sin(); 0.0, -phi.sin(), phi.cos()];
-    let r2 = matrix![theta.cos(), 0.0, -theta.sin(); 0.0, 1.0, 0.0; theta.sin(), 0.0, theta.cos()];
-    let r3 = matrix![psi.cos(), psi.sin(), 0.0; -psi.sin(), psi.cos(), 0.0; 0.0, 0.0, 1.0];
+    let roll = angles[0]; // roll
+    let pitch = angles[1]; // pitch
+    let yaw = angles[2]; // yaw
+    let r1 = matrix![1.0, 0.0, 0.0; 0.0, roll.cos(), roll.sin(); 0.0, -roll.sin(), roll.cos()];
+    let r2 = matrix![pitch.cos(), 0.0, -pitch.sin(); 0.0, 1.0, 0.0; pitch.sin(), 0.0, pitch.cos()];
+    let r3 = matrix![yaw.cos(), yaw.sin(), 0.0; -yaw.sin(), yaw.cos(), 0.0; 0.0, 0.0, 1.0];
     let r = r3.transpose() * r2.transpose() * r1.transpose();
     r
 }
 
+// Compute acceleration in normal quad direction.
 pub fn compute_acceleration(
     inputs: Vector4<Real>,
     angles: Vector3<Real>,
     m: Real,
     k: Real,
 ) -> Vector3<Real> {
-    let quat = rapier3d::na::UnitQuaternion::from_euler_angles(angles.x, angles.y, angles.z);
-    let normal = quat.transform_vector(&Vector3::new(0.0, 0.0, 1.0));
+    let normal =
+        get_rotation_matrix(vector![angles.x, angles.y, angles.z]) * Vector3::new(0.0, 0.0, 1.0);
     let t = normal * thrust(inputs, k);
-    //let Fd = -kd * xdot;
     let a = 1.0 / m * t;
     a
 }
